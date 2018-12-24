@@ -15,36 +15,48 @@ from pathlib import Path
 
 config = {
     'REPORT_SIZE': 1000,
-    'REPORT_DIR': './reports',
     'LOG_DIR': './log',
     'LOG_NAME_PATTERN': r'^nginx-access-ui.log-\d{8}(\.gz|)$',
-    'LOG_NAME_SLICE': slice(20, 28)
+    'LOG_DATE_FORMAT': '%Y%m%d',
+    'LOG_NAME_SLICE': slice(20, 28),
+    'REPORT_DIR': './reports',
+    'REPORT_NAME_PATTERN': r'^report-\d{4}.\d{2}.\d{2}.html$',
+    'REPORT_DATE_FORMAT': '%Y.%m.%d',
+    'REPORT_NAME_SLICE': slice(7, 17),
 }
 
 
-def search_last_log_file(config):
-    log_dir = Path(config['LOG_DIR'])
-    new_date_str = ''
+def search_last_file(directory, pattern, date_format, sl, new_date_str=''):
     new_date = None
     new_file_path = None
-    pattern = re.compile(config['LOG_NAME_PATTERN'])
-    log_sl = config['LOG_NAME_SLICE']
-    for file_name in os.listdir(log_dir):
+    for file_name in os.listdir(directory):
         if (pattern.search(file_name) and
-                os.path.isfile(log_dir / file_name) and
-                new_date_str < file_name[log_sl]):
+                os.path.isfile(directory / file_name) and
+                new_date_str < file_name[sl]):
             try:
                 new_date = datetime.strptime(
-                    file_name[log_sl], '%Y%m%d').date()
-                new_date_str = file_name[log_sl]
-                new_file_path = log_dir / file_name
+                    file_name[sl], date_format).date()
+                new_date_str = file_name[sl]
+                new_file_path = directory / file_name
             except ValueError:
                 pass
     return new_date, new_file_path
 
 
 def main():
-    print(search_last_log_file(config))
+    report_dir = Path(config['REPORT_DIR'])
+    pattern = re.compile(config['REPORT_NAME_PATTERN'])
+    date_format = config['REPORT_DATE_FORMAT']
+    report_sl = config['REPORT_NAME_SLICE']
+    result = search_last_file(report_dir, pattern, date_format, report_sl)
+    print(result)
+
+    log_dir = Path(config['LOG_DIR'])
+    pattern = re.compile(config['LOG_NAME_PATTERN'])
+    date_format = config['LOG_DATE_FORMAT']
+    log_sl = config['LOG_NAME_SLICE']
+    result = search_last_file(log_dir, pattern, date_format, log_sl)
+    print(result)
 
 
 if __name__ == "__main__":

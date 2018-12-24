@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import datetime
+import re
 import unittest
 from unittest import mock
 from pathlib import Path
@@ -32,12 +33,26 @@ class TestSuite(unittest.TestCase):
                     'nginx-access-ui.log-201AAA30.gz',
                     'pic.jpg']
                 mocked_isfile.side_effect = isfile_side_effect
-                result = log_analyzer.search_last_log_file(log_analyzer.config)
+                result = log_analyzer.search_last_file(
+                    Path(log_analyzer.config['LOG_DIR']),
+                    re.compile(log_analyzer.config['LOG_NAME_PATTERN']),
+                    log_analyzer.config['LOG_DATE_FORMAT'],
+                    log_analyzer.config['LOG_NAME_SLICE'])
         log_dir = Path(log_analyzer.config['LOG_DIR'])
         new_date = datetime.date(2018, 6, 30)
         new_file_name = 'nginx-access-ui.log-20180630'
         new_file_path = log_dir / new_file_name
         self.assertEqual(result, (new_date, new_file_path))
+
+    def test_search_last_log_file_in_empty_dir(self):
+        with mock.patch('os.listdir') as mocked_listdir:
+            mocked_listdir.return_value = []
+            result = log_analyzer.search_last_file(
+                Path(log_analyzer.config['LOG_DIR']),
+                re.compile(log_analyzer.config['LOG_NAME_PATTERN']),
+                log_analyzer.config['LOG_DATE_FORMAT'],
+                log_analyzer.config['LOG_NAME_SLICE'])
+        self.assertEqual(result, (None, None))
 
 
 if __name__ == "__main__":
