@@ -1,4 +1,5 @@
-#Log Analyzer (otus)
+Log Analyzer (otus)
+-------------------
 
 Log Analyzer for Nginx
 
